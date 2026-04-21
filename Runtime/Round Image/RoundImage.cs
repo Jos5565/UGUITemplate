@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Serialization;
 using UnityEngine.U2D;
-using UGUICUSTOM;
 using Nobi.UiRoundedCorners;
+using UnityEngine.UI;
 
-namespace UnityEngine.UI
+namespace UGUICUSTOM
 {
     /// <summary>
     /// Image is a textured element in the UI hierarchy.
@@ -247,46 +246,6 @@ namespace UnityEngine.UI
         [FormerlySerializedAs("m_Frame")]
         [SerializeField]
         private Sprite m_Sprite;
-
-        /// <summary>
-        /// The sprite that is used to render this image.
-        /// </summary>
-        /// <remarks>
-        /// This returns the source Sprite of an Image. This Sprite can also be viewed and changed in the Inspector as part of an Image component. This can also be used to change the Sprite using a script.
-        /// </remarks>
-        /// <example>
-        /// <code>
-        /// <![CDATA[
-        /// //Attach this script to an Image GameObject and set its Source Image to the Sprite you would like.
-        /// //Press the space key to change the Sprite. Remember to assign a second Sprite in this script's section of the Inspector.
-        ///
-        /// using UnityEngine;
-        /// using UnityEngine.UI;
-        ///
-        /// public class Example : MonoBehaviour
-        /// {
-        ///     Image m_Image;
-        ///     //Set this in the Inspector
-        ///     public Sprite m_Sprite;
-        ///
-        ///     void Start()
-        ///     {
-        ///         //Fetch the Image from the GameObject
-        ///         m_Image = GetComponent<Image>();
-        ///     }
-        ///
-        ///     void Update()
-        ///     {
-        ///         //Press space to change the Sprite of the Image
-        ///         if (Input.GetKey(KeyCode.Space))
-        ///         {
-        ///             m_Image.sprite = m_Sprite;
-        ///         }
-        ///     }
-        /// }
-        /// ]]>
-        ///</code>
-        /// </example>
 
         public Sprite sprite
         {
@@ -843,7 +802,7 @@ namespace UnityEngine.UI
         /// Image's dimensions used for drawing. X = left, Y = bottom, Z = right, W = top.
         private Vector4 GetDrawingDimensions(bool shouldPreserveAspect)
         {
-            var padding = activeSprite == null ? Vector4.zero : Sprites.DataUtility.GetPadding(activeSprite);
+            var padding = activeSprite == null ? Vector4.zero : UnityEngine.Sprites.DataUtility.GetPadding(activeSprite);
             var size = activeSprite == null ? Vector2.zero : new Vector2(activeSprite.rect.width, activeSprite.rect.height);
 
             Rect r = GetPixelAdjustedRect();
@@ -1006,7 +965,7 @@ namespace UnityEngine.UI
         void GenerateSimpleSprite(VertexHelper vh, bool lPreserveAspect)
         {
             Vector4 v = GetDrawingDimensions(lPreserveAspect);
-            var uv = (activeSprite != null) ? Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
+            var uv = (activeSprite != null) ? UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
 
             var color32 = color;
             vh.Clear();
@@ -1074,9 +1033,9 @@ namespace UnityEngine.UI
 
             if (activeSprite != null)
             {
-                outer = Sprites.DataUtility.GetOuterUV(activeSprite);
-                inner = Sprites.DataUtility.GetInnerUV(activeSprite);
-                padding = Sprites.DataUtility.GetPadding(activeSprite);
+                outer = UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite);
+                inner = UnityEngine.Sprites.DataUtility.GetInnerUV(activeSprite);
+                padding = UnityEngine.Sprites.DataUtility.GetPadding(activeSprite);
                 border = activeSprite.border;
             }
             else
@@ -1147,8 +1106,8 @@ namespace UnityEngine.UI
 
             if (activeSprite != null)
             {
-                outer = Sprites.DataUtility.GetOuterUV(activeSprite);
-                inner = Sprites.DataUtility.GetInnerUV(activeSprite);
+                outer = UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite);
+                inner = UnityEngine.Sprites.DataUtility.GetInnerUV(activeSprite);
                 border = activeSprite.border;
                 spriteSize = activeSprite.rect.size;
             }
@@ -1454,7 +1413,7 @@ namespace UnityEngine.UI
                 return;
 
             Vector4 v = GetDrawingDimensions(preserveAspect);
-            Vector4 outer = activeSprite != null ? Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
+            Vector4 outer = activeSprite != null ? UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
             UIVertex uiv = UIVertex.simpleVert;
             uiv.color = color;
 
@@ -1780,7 +1739,7 @@ namespace UnityEngine.UI
                 if (activeSprite == null)
                     return 0;
                 if (type == Type.Sliced || type == Type.Tiled)
-                    return Sprites.DataUtility.GetMinSize(activeSprite).x / pixelsPerUnit;
+                    return UnityEngine.Sprites.DataUtility.GetMinSize(activeSprite).x / pixelsPerUnit;
                 return activeSprite.rect.size.x / pixelsPerUnit;
             }
         }
@@ -1806,7 +1765,7 @@ namespace UnityEngine.UI
                 if (activeSprite == null)
                     return 0;
                 if (type == Type.Sliced || type == Type.Tiled)
-                    return Sprites.DataUtility.GetMinSize(activeSprite).y / pixelsPerUnit;
+                    return UnityEngine.Sprites.DataUtility.GetMinSize(activeSprite).y / pixelsPerUnit;
                 return activeSprite.rect.size.y / pixelsPerUnit;
             }
         }
@@ -1978,14 +1937,15 @@ namespace UnityEngine.UI
             }
         }
 
-       
-		public void Refresh() {
-			var rect = ((RectTransform)transform).rect;
 
-			//Multiply radius value by 2 to make the radius value appear consistent with ImageWithIndependentRoundedCorners script.
-			//Right now, the ImageWithIndependentRoundedCorners appears to have double the radius than this.
-			r_Material.SetVector(Props, new Vector4(rect.width, rect.height, m_Round * 2, 0));
-			r_Material.SetVector(prop_OuterUV, outerUV);
-		}
+        public void Refresh()
+        {
+            var rect = ((RectTransform)transform).rect;
+
+            //Multiply radius value by 2 to make the radius value appear consistent with ImageWithIndependentRoundedCorners script.
+            //Right now, the ImageWithIndependentRoundedCorners appears to have double the radius than this.
+            r_Material.SetVector(Props, new Vector4(rect.width, rect.height, m_Round * 2, 0));
+            r_Material.SetVector(prop_OuterUV, outerUV);
+        }
     }
 }

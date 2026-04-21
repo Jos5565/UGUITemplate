@@ -2,9 +2,11 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor.AnimatedValues;
 using UnityEngine.UI;
+using UnityEditor;
+using UnityEditor.UI;
 
 
-namespace UnityEditor.UI
+namespace UGUICUSTOM
 {
     /// <summary>
     /// Editor class used to edit UI Sprites.
