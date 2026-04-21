@@ -1,9 +1,11 @@
-using UnityEngine;
 
-public enum SimpleListContentLayoutFilter
+namespace UGUICUSTOM
 {
-    None = 0,
-    Horizontal = 1,
-    Vertical = 2,
-    Grid = 3
+    public enum SimpleListContentLayoutFilter
+    {
+        None = 0,
+        Horizontal = 1,
+        Vertical = 2,
+        Grid = 3
+    }
 }

@@ -2,9 +2,13 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-public interface ISimpleList
+namespace UGUICUSTOM
 {
-    public void AddElement();
+    public interface ISimpleList
+    {
+        public void AddElement();
+    }
+    [Serializable]
+    public class ElementEvent : UnityEvent { }
+
 }
-[Serializable]
-public class ElementEvent : UnityEvent { }
