@@ -15,6 +15,8 @@ namespace UGUICUSTOM
         public bool isToggle = false;
         public bool isOn = false;
         private Sprite toggleDefaultSprite;
+        private Color toggleDefaultColor;
+        public Color toggleCheckColor;
         public Sprite toggleCheckSprite;
         private Image image;
         protected ButtonToggle()
@@ -23,6 +25,7 @@ namespace UGUICUSTOM
         protected override void OnEnable()
         {
             base.OnEnable();
+            Initialize();
         }
         public void Initialize()
         {
@@ -36,6 +39,7 @@ namespace UGUICUSTOM
                 image = (Image)g;
             }
             if (!image.sprite.IsUnityNull()) toggleDefaultSprite = image.sprite;
+            else if (image.sprite.IsUnityNull()) toggleDefaultColor = image.color;
         }
         private void Press()
         {
@@ -48,7 +52,8 @@ namespace UGUICUSTOM
             {
                 isOn = !isOn;
                 IsOn?.Invoke(isOn);
-                image.sprite = isOn ? toggleCheckSprite : toggleDefaultSprite;
+                ToggleGrapic(isOn);
+                //image.sprite = isOn ? toggleCheckSprite : toggleDefaultSprite;
             }
             else
             {
@@ -87,6 +92,26 @@ namespace UGUICUSTOM
             }
 
             DoStateTransition(currentSelectionState, false);
+        }
+
+        private void ToggleGrapic(bool isOn)
+        {
+            if (!image.sprite.IsUnityNull() && isOn)
+            {
+                image.sprite = toggleCheckSprite;
+            }
+            else if (!image.sprite.IsUnityNull() && !isOn)
+            {
+                image.sprite = toggleDefaultSprite;
+            }
+            else if (image.sprite.IsUnityNull() && isOn)
+            {
+                image.color = toggleCheckColor;
+            }
+            else if (image.sprite.IsUnityNull() && !isOn)
+            {
+                image.color = toggleDefaultColor;
+            }
         }
     }
 

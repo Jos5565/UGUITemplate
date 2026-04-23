@@ -1,5 +1,6 @@
 using UnityEditor;
 using UGUICUSTOM;
+using Unity.VisualScripting;
 
 namespace UnityEngine.UI
 {
@@ -24,8 +25,17 @@ namespace UnityEngine.UI
             EditorGUILayout.Space(10);
             if (buttonToggle.isToggle)
             {
-                SerializedProperty spriteField = serializedObject.FindProperty("toggleCheckSprite");
-                EditorGUILayout.PropertyField(spriteField, new GUIContent("Toggle Check Image"), true);
+                if (buttonToggle.image.sprite.IsUnityNull())
+                {
+                    SerializedProperty spriteField = serializedObject.FindProperty("toggleCheckColor");
+                    EditorGUILayout.PropertyField(spriteField, new GUIContent("Toggle Check Color"), true);
+                }
+                else
+                {
+                    SerializedProperty spriteField = serializedObject.FindProperty("toggleCheckSprite");
+                    EditorGUILayout.PropertyField(spriteField, new GUIContent("Toggle Check Image"), true);
+                }
+
                 SerializedProperty booleanField = serializedObject.FindProperty("isOn");
                 EditorGUILayout.PropertyField(booleanField, new GUIContent("isOn"), true);
                 EditorGUILayout.Space(5);
