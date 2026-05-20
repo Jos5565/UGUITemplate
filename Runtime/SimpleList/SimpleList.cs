@@ -41,14 +41,15 @@ namespace UGUICUSTOM
         {
             OnCreateElementExternal(Element);
         }
-        public void OnCreateElementExternal(GameObject element)
+        public T OnCreateElementExternal<T>(T element)
         {
-            GameObject go = Instantiate(element, scrollView.scrollRect.content);
+            GameObject go = Instantiate(element.ConvertTo<GameObject>(), scrollView.scrollRect.content);
             if (SimpleListOption.cellSize.x == 0 && SimpleListOption.cellSize.y == 0)
             {
                 SimpleListOption.cellSize = go.GetComponent<RectTransform>().sizeDelta;
             }
             elements.Add(go);
+            return element;
         }
         public void OnClearElements()
         {
