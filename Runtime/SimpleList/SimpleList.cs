@@ -39,9 +39,9 @@ namespace UGUICUSTOM
         }
         public void OnCreateElement()
         {
-            OnCreateElement(Element);
+            OnCreateElementExternal(Element);
         }
-        public void OnCreateElement(GameObject element)
+        public void OnCreateElementExternal(GameObject element)
         {
             GameObject go = Instantiate(element, scrollView.scrollRect.content);
             if (SimpleListOption.cellSize.x == 0 && SimpleListOption.cellSize.y == 0)
