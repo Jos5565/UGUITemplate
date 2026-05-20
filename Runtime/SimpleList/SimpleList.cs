@@ -41,15 +41,16 @@ namespace UGUICUSTOM
         {
             OnCreateElementSelf(Element);
         }
-        public T OnCreateElementSelf<T>(T element)
+        public T OnCreateElementSelf<T>(T element) where T : class
         {
+            if (scrollView.IsUnityNull()) OnReImport();
             GameObject go = Instantiate(element.ConvertTo<GameObject>(), scrollView.scrollRect.content);
             if (SimpleListOption.cellSize.x == 0 && SimpleListOption.cellSize.y == 0)
             {
                 SimpleListOption.cellSize = go.GetComponent<RectTransform>().sizeDelta;
             }
             elements.Add(go);
-            return go.ConvertTo<T>();
+            return go.ConvertTo<T>()!;
         }
         public void OnClearElements()
         {
