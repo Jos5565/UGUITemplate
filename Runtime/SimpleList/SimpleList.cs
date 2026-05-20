@@ -39,9 +39,9 @@ namespace UGUICUSTOM
         }
         public void OnCreateElement()
         {
-            OnCreateElementExternal(Element);
+            OnCreateElementSelf(Element);
         }
-        public T OnCreateElementExternal<T>(T element)
+        public T OnCreateElementSelf<T>(T element)
         {
             GameObject go = Instantiate(element.ConvertTo<GameObject>(), scrollView.scrollRect.content);
             if (SimpleListOption.cellSize.x == 0 && SimpleListOption.cellSize.y == 0)
@@ -49,7 +49,7 @@ namespace UGUICUSTOM
                 SimpleListOption.cellSize = go.GetComponent<RectTransform>().sizeDelta;
             }
             elements.Add(go);
-            return element;
+            return go.ConvertTo<T>();
         }
         public void OnClearElements()
         {
