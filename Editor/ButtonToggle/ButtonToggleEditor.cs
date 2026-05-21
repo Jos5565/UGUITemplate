@@ -25,7 +25,7 @@ namespace UnityEngine.UI
             EditorGUILayout.Space(10);
             if (buttonToggle.isToggle)
             {
-                if (buttonToggle.image.sprite.IsUnityNull())
+                if (buttonToggle.toggleCheckSprite.IsUnityNull())
                 {
                     SerializedProperty spriteField = serializedObject.FindProperty("toggleCheckColor");
                     EditorGUILayout.PropertyField(spriteField, new GUIContent("Toggle Check Color"), true);
