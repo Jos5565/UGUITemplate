@@ -1914,6 +1914,16 @@ namespace UGUICUSTOM
         }
 
 #endif
+        protected override void OnRectTransformDimensionsChange()
+        {
+            base.OnRectTransformDimensionsChange();
+
+            if (!IsActive())
+                return;
+
+            Validate();
+            Refresh();
+        }
         public void Validate()
         {
             if (r_Material == null)

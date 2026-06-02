@@ -41,7 +41,6 @@ namespace UGUICUSTOM
         AnimBool m_ShowFilled;
         AnimBool m_ShowType;
         bool m_bIsDriven;
-
         private class Styles
         {
             public static GUIContent text = EditorGUIUtility.TrTextContent("Fill Origin");
@@ -118,7 +117,6 @@ namespace UGUICUSTOM
 
             SetShowNativeSize(true);
 
-            m_bIsDriven = false;
         }
 
         protected override void OnDisable()
@@ -130,6 +128,7 @@ namespace UGUICUSTOM
             m_ShowSliced.valueChanged.RemoveListener(Repaint);
             m_ShowTiled.valueChanged.RemoveListener(Repaint);
             m_ShowFilled.valueChanged.RemoveListener(Repaint);
+
         }
 
         public override void OnInspectorGUI()
