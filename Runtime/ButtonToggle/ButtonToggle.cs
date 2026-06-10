@@ -13,7 +13,6 @@ namespace UGUICUSTOM
         public UnityEvent OnClick;
         public UnityEvent<bool> IsOn;
         public bool isToggle = false;
-        public bool isOn = false;
         public Sprite toggleDefaultSprite;
         private Color toggleDefaultColor;
         public Color toggleCheckColor;
@@ -21,7 +20,25 @@ namespace UGUICUSTOM
         private Image thisImage;
         private RoundImage roundImage;
         public bool isRound;
+
+        public bool m_IsOn;
+
+        // 외부 코드나 런타임에서 접근할 프로퍼티
+        public bool isOn
+        {
+            get => m_IsOn;
+            set
+            {
+                // 값이 실제로 바뀔 때만 실행
+                if (m_IsOn != value)
+                {
+                    m_IsOn = value;
+                    ToggleGrapic(m_IsOn); // 여기서 변경 리스너 실행!
+                }
+            }
+        }
         private bool lastIsOn; // 이전 값을 기억할 변수
+
         protected ButtonToggle()
         { }
 

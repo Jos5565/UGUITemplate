@@ -36,8 +36,8 @@ namespace UnityEngine.UI
                 }
 
 
-                SerializedProperty booleanField = serializedObject.FindProperty("isOn");
-                EditorGUILayout.PropertyField(booleanField, new GUIContent("isOn"), true);
+                SerializedProperty booleanField = serializedObject.FindProperty("m_IsOn");
+                EditorGUILayout.PropertyField(booleanField, new GUIContent("is On"), true);
                 EditorGUILayout.Space(5);
                 useToggle = "Activated Button";
                 GUI.backgroundColor = Color.yellow;
