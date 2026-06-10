@@ -20,12 +20,12 @@ namespace UnityEngine.UI
             serializedObject.Update();
             EditorGUILayout.LabelField("Button Settings", EditorStyles.boldLabel);
             DrawSelectableProperties();
-
+            buttonToggle.Initialize();
 
             EditorGUILayout.Space(10);
             if (buttonToggle.isToggle)
             {
-                if (buttonToggle.toggleCheckSprite.IsUnityNull())
+                if (!buttonToggle.isSprite)
                 {
                     SerializedProperty spriteField = serializedObject.FindProperty("toggleCheckColor");
                     EditorGUILayout.PropertyField(spriteField, new GUIContent("Toggle Check Color"), true);
