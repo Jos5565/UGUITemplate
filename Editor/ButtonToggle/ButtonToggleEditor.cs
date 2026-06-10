@@ -35,6 +35,7 @@ namespace UnityEngine.UI
                     EditorGUILayout.PropertyField(spriteField, new GUIContent("Toggle Check Image"), true);
                 }
 
+
                 SerializedProperty booleanField = serializedObject.FindProperty("isOn");
                 EditorGUILayout.PropertyField(booleanField, new GUIContent("isOn"), true);
                 EditorGUILayout.Space(5);
@@ -129,5 +130,7 @@ namespace UnityEngine.UI
             return true;
 
         }
+
+
     }
 }

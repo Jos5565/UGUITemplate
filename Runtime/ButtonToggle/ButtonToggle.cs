@@ -18,9 +18,10 @@ namespace UGUICUSTOM
         private Color toggleDefaultColor;
         public Color toggleCheckColor;
         public Sprite toggleCheckSprite;
-        private Image image;
+        private Image thisImage;
         private RoundImage roundImage;
         public bool isRound;
+        private bool lastIsOn; // 이전 값을 기억할 변수
         protected ButtonToggle()
         { }
 
@@ -29,12 +30,20 @@ namespace UGUICUSTOM
             base.OnEnable();
             Initialize();
         }
+        protected override void OnValidate()
+        {
+            if (isOn != lastIsOn)
+            {
+                lastIsOn = isOn;
+                ToggleGrapic(isOn);
+            }
+        }
         public void Initialize()
         {
             if (!transform.TryGetComponent(out Graphic g))
             {
-                image = transform.AddComponent<Image>();
-                targetGraphic = image;
+                thisImage = transform.AddComponent<Image>();
+                targetGraphic = thisImage;
                 GetImageGrapics();
                 isRound = false;
             }
@@ -42,7 +51,7 @@ namespace UGUICUSTOM
             {
                 if (g is Image)
                 {
-                    image = (Image)g;
+                    thisImage = (Image)g;
                     GetImageGrapics();
                 }
                 else if (g is RoundImage)
@@ -57,17 +66,19 @@ namespace UGUICUSTOM
 
         private void GetImageGrapics()
         {
-            if (!image.sprite.IsUnityNull())
+            isRound = false;
+            if (!thisImage.sprite.IsUnityNull())
             {
-                toggleDefaultSprite = image.sprite;
+                toggleDefaultSprite = thisImage.sprite;
             }
-            else if (image.sprite.IsUnityNull())
+            else if (thisImage.sprite.IsUnityNull())
             {
-                toggleDefaultColor = image.color;
+                toggleDefaultColor = thisImage.color;
             }
         }
         private void GetRoundImageGrapics()
         {
+            isRound = true;
             if (!roundImage.sprite.IsUnityNull())
             {
                 toggleDefaultSprite = roundImage.sprite;
@@ -89,7 +100,7 @@ namespace UGUICUSTOM
                 isOn = !isOn;
                 IsOn?.Invoke(isOn);
                 ToggleGrapic(isOn);
-                //image.sprite = isOn ? toggleCheckSprite : toggleDefaultSprite;
+                //thisImage.sprite = isOn ? toggleCheckSprite : toggleDefaultSprite;
             }
             else
             {
@@ -132,22 +143,30 @@ namespace UGUICUSTOM
 
         private void ToggleGrapic(bool isOn)
         {
-            if (!image.sprite.IsUnityNull() && isOn)
+            if (isRound)
             {
-                image.sprite = toggleCheckSprite;
+                if (roundImage.sprite == null)
+                {
+                    roundImage.color = isOn ? toggleCheckColor : toggleDefaultColor;
+                }
+                if (roundImage.sprite != null)
+                {
+                    roundImage.sprite = isOn ? toggleCheckSprite : toggleDefaultSprite;
+                }
             }
-            else if (!image.sprite.IsUnityNull() && !isOn)
+            else
             {
-                image.sprite = toggleDefaultSprite;
+                if (thisImage.sprite == null)
+                {
+                    thisImage.color = isOn ? toggleCheckColor : toggleDefaultColor;
+                }
+                if (thisImage.sprite != null)
+                {
+                    thisImage.sprite = isOn ? toggleCheckSprite : toggleDefaultSprite;
+                }
             }
-            else if (image.sprite.IsUnityNull() && isOn)
-            {
-                image.color = toggleCheckColor;
-            }
-            else if (image.sprite.IsUnityNull() && !isOn)
-            {
-                image.color = toggleDefaultColor;
-            }
+
+
         }
     }
 
