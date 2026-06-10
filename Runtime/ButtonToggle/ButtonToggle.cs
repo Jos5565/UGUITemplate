@@ -20,7 +20,7 @@ namespace UGUICUSTOM
         public Sprite toggleCheckSprite;
         private Image image;
         private RoundImage roundImage;
-        public bool isSprite;
+        public bool isRound;
         protected ButtonToggle()
         { }
 
@@ -36,6 +36,7 @@ namespace UGUICUSTOM
                 image = transform.AddComponent<Image>();
                 targetGraphic = image;
                 GetImageGrapics();
+                isRound = false;
             }
             else
             {
@@ -48,21 +49,21 @@ namespace UGUICUSTOM
                 {
                     roundImage = (RoundImage)g;
                     GetRoundImageGrapics();
+                    isRound = true;
                 }
             }
 
         }
+
         private void GetImageGrapics()
         {
             if (!image.sprite.IsUnityNull())
             {
                 toggleDefaultSprite = image.sprite;
-                isSprite = true;
             }
             else if (image.sprite.IsUnityNull())
             {
                 toggleDefaultColor = image.color;
-                isSprite = false;
             }
         }
         private void GetRoundImageGrapics()
@@ -70,12 +71,10 @@ namespace UGUICUSTOM
             if (!roundImage.sprite.IsUnityNull())
             {
                 toggleDefaultSprite = roundImage.sprite;
-                isSprite = true;
             }
             else if (roundImage.sprite.IsUnityNull())
             {
                 toggleDefaultColor = roundImage.color;
-                isSprite = false;
             }
         }
         private void Press()

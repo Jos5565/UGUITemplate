@@ -4,7 +4,7 @@ using UGUICUSTOM;
 
 public class UGUICustomButtonToggleMenuItem : MonoBehaviour
 {
-    [MenuItem("GameObject/UI/Button Toggle", false)]
+    [MenuItem("GameObject/UI (Canvas)/Button Toggle", false)]
     static void MenuItem(MenuCommand menuCommand)
     {
         // 1. Custom GameObject 이름으로 새 Object를 만든다.

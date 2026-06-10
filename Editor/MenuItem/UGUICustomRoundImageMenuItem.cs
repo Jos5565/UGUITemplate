@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class UGUICustomRoundImageMenuItem : MonoBehaviour
 {
-    [MenuItem("GameObject/UI/Round Image", false)]
+    [MenuItem("GameObject/UI (Canvas)/Round Image", false)]
     static void MenuItem(MenuCommand menuCommand)
     {
         // 1. Custom GameObject 이름으로 새 Object를 만든다.

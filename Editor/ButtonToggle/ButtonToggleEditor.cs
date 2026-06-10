@@ -20,12 +20,11 @@ namespace UnityEngine.UI
             serializedObject.Update();
             EditorGUILayout.LabelField("Button Settings", EditorStyles.boldLabel);
             DrawSelectableProperties();
-            buttonToggle.Initialize();
 
             EditorGUILayout.Space(10);
             if (buttonToggle.isToggle)
             {
-                if (!buttonToggle.isSprite)
+                if (!OnChangesPublished())
                 {
                     SerializedProperty spriteField = serializedObject.FindProperty("toggleCheckColor");
                     EditorGUILayout.PropertyField(spriteField, new GUIContent("Toggle Check Color"), true);
@@ -90,7 +89,45 @@ namespace UnityEngine.UI
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Navigation"));
         }
+        private Sprite lastSprite;
+        private bool OnChangesPublished()
+        {
+            if (!buttonToggle.isRound)
+            {
+                var script = (Image)buttonToggle.targetGraphic;
+
+                if (script.sprite == null) return false;
+
+                // 인스펙터에서 값이 변경되었는지 감지
+                if (GUI.changed)
+                {
+                    if (script.sprite != lastSprite)
+                    {
+                        Debug.Log($"스프라이트 변경 감지! 이전: {lastSprite?.name ?? "None"} -> 현재: {script.sprite?.name ?? "None"}");
+                        lastSprite = script.sprite; // 상태 갱신
+                    }
+                }
+
+            }
+            else
+            {
+                var script = (RoundImage)buttonToggle.targetGraphic;
+
+                if (script.sprite == null) return false;
+
+                // 인스펙터에서 값이 변경되었는지 감지
+                if (GUI.changed)
+                {
+                    if (script.sprite != lastSprite)
+                    {
+                        Debug.Log($"스프라이트 변경 감지! 이전: {lastSprite?.name ?? "None"} -> 현재: {script.sprite?.name ?? "None"}");
+                        lastSprite = script.sprite; // 상태 갱신
+
+                    }
+                }
+            }
+            return true;
+
+        }
     }
-
-
 }

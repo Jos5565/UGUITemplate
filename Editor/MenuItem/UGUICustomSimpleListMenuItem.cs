@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class UGUICustomSimpleListMenuItem : MonoBehaviour
 {
-    [MenuItem("GameObject/UI/Simple List", false)]
+    [MenuItem("GameObject/UI (Canvas)/Simple List", false)]
     static void MenuItem(MenuCommand menuCommand)
     {
         // 1. Custom GameObject 이름으로 새 Object를 만든다.
