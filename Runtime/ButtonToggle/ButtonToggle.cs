@@ -59,16 +59,13 @@ namespace UGUICUSTOM
         { }
         protected override void Start()
         {
-            if (isToggle)
-            {
-                SetToggleGroup(m_Group, false);
-                //   ToggleGroupExtensions.EnsureValidState(group);
-            }
+
         }
 
         protected override void OnEnable()
         {
             base.OnEnable();
+            SetToggleGroup(m_Group, false);
             Initialize();
         }
         protected override void OnDisable()
