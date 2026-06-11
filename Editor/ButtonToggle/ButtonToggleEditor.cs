@@ -38,6 +38,8 @@ namespace UnityEngine.UI
 
                 SerializedProperty booleanField = serializedObject.FindProperty("m_IsOn");
                 EditorGUILayout.PropertyField(booleanField, new GUIContent("is On"), true);
+                SerializedProperty toggleGroupField = serializedObject.FindProperty("m_Group");
+                EditorGUILayout.PropertyField(toggleGroupField, new GUIContent("Toggle Group"), true);
                 EditorGUILayout.Space(5);
                 useToggle = "Activated Button";
                 GUI.backgroundColor = Color.yellow;

@@ -10,5 +10,8 @@ public class Test : MonoBehaviour
     {
         SampleElement ele = list.OnCreateElementSelf<SampleElement>(element);
     }
-
+    public void TestFunc(string test)
+    {
+        Debug.Log(test);
+    }
 }
