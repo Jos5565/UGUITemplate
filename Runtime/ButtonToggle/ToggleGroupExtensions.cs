@@ -46,7 +46,7 @@ public static class ToggleGroupExtensions
     {
         if (toggle == null || !m_Toggles.Contains(toggle))
         {
-            throw new ArgumentException(string.Format("Toggle {0} is not part of ToggleGroup {1}"));
+            throw new ArgumentException(string.Format("Toggle  is not part of ToggleGroup "));
         }
     }
     public static void NotifyToggleOn(ButtonToggle toggle, bool sendCallback = true)
