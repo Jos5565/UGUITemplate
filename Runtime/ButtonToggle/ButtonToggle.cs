@@ -73,7 +73,7 @@ namespace UGUICUSTOM
             SetToggleGroup(null, false);
             base.OnDisable();
         }
-        protected override void OnValidate()
+        protected void OnValidate()
         {
 
             if (isToggle && isOn != lastIsOn)
