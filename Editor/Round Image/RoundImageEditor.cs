@@ -242,7 +242,8 @@ namespace UGUICUSTOM
                 m_BorderWidth.floatValue = Mathf.Max(0f, newBorderWidth);
             }
 
-            EditorGUILayout.PropertyField(m_BorderColor, new GUIContent("Border Color"));
+            EditorGUILayout.PropertyField(m_BorderColor, new GUIContent("Border Color",
+                "Border opacity is independent of Graphic Color alpha, which controls content only. CanvasGroup fades both."));
         }
         /// <summary>
         /// Sprites's custom properties based on the type.

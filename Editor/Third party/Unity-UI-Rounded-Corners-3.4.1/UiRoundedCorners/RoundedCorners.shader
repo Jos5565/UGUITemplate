@@ -16,6 +16,7 @@ Shader "UI/RoundedCorners/RoundedCorners" {
         _OuterUV ("image outer uv", Vector) = (0, 0, 1, 1)
         _BorderColor ("Border Color", Color) = (1, 1, 1, 1)
         _BorderWidth ("Border Width", Float) = 0
+        [HideInInspector] _ContentAlpha ("Graphic Color Alpha", Range(0, 1)) = 1
         [HideInInspector] _BorderShape ("Border Shape", Float) = 0
         [HideInInspector] _SpriteRect ("Sprite Rect", Vector) = (0, 0, 1, 1)
         [HideInInspector] _OutlineAlphaThreshold ("Outline Alpha Threshold", Float) = 0.01
@@ -64,6 +65,7 @@ Shader "UI/RoundedCorners/RoundedCorners" {
             float4 _OuterUV;
             float4 _BorderColor;
             float _BorderWidth;
+            float _ContentAlpha;
             float _BorderShape;
             float4 _SpriteRect;
             float _OutlineAlphaThreshold;
@@ -119,12 +121,15 @@ Shader "UI/RoundedCorners/RoundedCorners" {
                     }
                 }
                 half4 spriteColor = source * i.color;
+                // Shape coverage uses the original alpha so fading the content does
+                // not change the outline or turn it into a fill behind the sprite.
+                float contentA = source.a * _ContentAlpha;
                 float borderA = _BorderWidth > 0.0 ? expandedCoverage * (1.0 - centerCoverage) * _BorderColor.a : 0.0;
                 // Composite the sprite over the stroke in premultiplied space, then
                 // convert back to straight alpha for the existing Canvas blend mode.
-                borderA *= 1.0 - source.a;
-                float totalA = source.a + borderA;
-                half3 rgb = (spriteColor.rgb * source.a + _BorderColor.rgb * borderA) / max(totalA, 0.0001);
+                borderA *= 1.0 - contentA;
+                float totalA = contentA + borderA;
+                half3 rgb = (spriteColor.rgb * contentA + _BorderColor.rgb * borderA) / max(totalA, 0.0001);
                 totalA *= i.color.a;
                 #ifdef UNITY_UI_CLIP_RECT
                 totalA *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
@@ -148,6 +153,7 @@ Shader "UI/RoundedCorners/RoundedCorners" {
                 }
 
                 half4 spriteColor = (tex2D(_MainTex, i.uv) + _TextureSampleAdd) * i.color;
+                spriteColor.a *= _ContentAlpha;
 
                 #ifdef UNITY_UI_CLIP_RECT
                 half clipFactor = UnityGet2DClipping(i.worldPosition.xy, _ClipRect);

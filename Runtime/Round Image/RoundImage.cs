@@ -27,11 +27,23 @@ namespace UGUICUSTOM
         private static readonly int prop_BorderShape = Shader.PropertyToID("_BorderShape");
         private static readonly int prop_SpriteRect = Shader.PropertyToID("_SpriteRect");
         private static readonly int prop_OutlineAlphaThreshold = Shader.PropertyToID("_OutlineAlphaThreshold");
+        private static readonly int prop_ContentAlpha = Shader.PropertyToID("_ContentAlpha");
 
         public enum BorderShape { RoundedRect, SpriteOutline }
 
         [SerializeField] private BorderShape m_BorderShape;
         [SerializeField, Range(0.001f, 1f)] private float m_OutlineAlphaThreshold = 0.01f;
+        /// <summary>Graphic Color alpha controls content only; Border Color alpha controls the stroke.</summary>
+        public override Color color
+        {
+            get => base.color;
+            set
+            {
+                if (base.color == value) return;
+                base.color = value;
+                Refresh();
+            }
+        }
 
         private bool UsesSpriteOutline => m_BorderShape == BorderShape.SpriteOutline && type == Type.Simple && activeSprite != null;
 
@@ -921,9 +933,12 @@ namespace UGUICUSTOM
         /// </summary>
         protected override void OnPopulateMesh(VertexHelper toFill)
         {
+            // Serialized Inspector changes also reach this path without the color setter.
+            Refresh();
             if (activeSprite == null)
             {
                 GenerateSimpleSprite(toFill, false);
+                SeparateContentAlpha(toFill);
                 return;
             }
 
@@ -944,6 +959,22 @@ namespace UGUICUSTOM
                 case Type.Filled:
                     GenerateFilledSprite(toFill, m_PreserveAspect);
                     break;
+            }
+            SeparateContentAlpha(toFill);
+        }
+
+        private static void SeparateContentAlpha(VertexHelper mesh)
+        {
+            // Store content opacity in the material, not the vertex alpha. Otherwise
+            // Color alpha = 0 can cull the entire mesh, including an opaque border.
+            UIVertex vertex = default;
+            for (int i = 0; i < mesh.currentVertCount; ++i)
+            {
+                mesh.PopulateUIVertex(ref vertex, i);
+                Color32 vertexColor = vertex.color;
+                vertexColor.a = 255;
+                vertex.color = vertexColor;
+                mesh.SetUIVertex(vertex, i);
             }
         }
 
@@ -2143,6 +2174,7 @@ namespace UGUICUSTOM
             targetMaterial.SetColor(prop_BorderColor, m_BorderColor);
             targetMaterial.SetFloat(prop_BorderShape, UsesSpriteOutline ? 1f : 0f);
             targetMaterial.SetFloat(prop_OutlineAlphaThreshold, m_OutlineAlphaThreshold);
+            targetMaterial.SetFloat(prop_ContentAlpha, Mathf.Clamp01(color.a));
             if (UsesSpriteOutline)
             {
                 Rect spriteRect = GetOutlineSpriteRect();
