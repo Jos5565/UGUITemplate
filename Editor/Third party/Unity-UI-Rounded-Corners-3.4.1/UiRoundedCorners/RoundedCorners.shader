@@ -65,31 +65,31 @@ Shader "UI/RoundedCorners/RoundedCorners" {
             float4 _ClipRect;
 
             fixed4 frag (v2f i) : SV_Target {
-                float2 uvSample = i.uv;
-                uvSample.x = (uvSample.x - _OuterUV.x) / (_OuterUV.z - _OuterUV.x);
-                uvSample.y = (uvSample.y - _OuterUV.y) / (_OuterUV.w - _OuterUV.y);
+                // Determine normalized 0~1 coordinate across the base area
+                float2 uvSample = i.uvRect;
+                if (fwidth(i.uvRect.x) == 0.0 && fwidth(i.uvRect.y) == 0.0) {
+                    uvSample = i.uv;
+                    if (_OuterUV.z > _OuterUV.x && _OuterUV.w > _OuterUV.y) {
+                        uvSample.x = (uvSample.x - _OuterUV.x) / (_OuterUV.z - _OuterUV.x);
+                        uvSample.y = (uvSample.y - _OuterUV.y) / (_OuterUV.w - _OuterUV.y);
+                    }
+                }
 
-                half4 color = (tex2D(_MainTex, i.uv) + _TextureSampleAdd) * i.color;
+                half4 spriteColor = (tex2D(_MainTex, i.uv) + _TextureSampleAdd) * i.color;
 
                 #ifdef UNITY_UI_CLIP_RECT
-                color.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
+                half clipFactor = UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
+                spriteColor.a *= clipFactor;
                 #endif
-
-                #ifdef UNITY_UI_ALPHACLIP
-                clip(color.a - 0.001);
-                #endif
-
-                if (color.a <= 0 && _BorderWidth <= 0) {
-                    return color;
-                }
 
                 float alphaOuter = CalcAlpha(uvSample, _WidthHeightRadius.xy, _WidthHeightRadius.z);
 
                 if (_BorderWidth <= 0.0) {
+                    spriteColor.a = min(spriteColor.a, alphaOuter);
                     #ifdef UNITY_UI_ALPHACLIP
-                    clip(alphaOuter - 0.001);
+                    clip(spriteColor.a - 0.001);
                     #endif
-                    return mixAlpha(tex2D(_MainTex, i.uv), i.color, alphaOuter);
+                    return spriteColor;
                 }
 
                 float alphaInner = CalcInnerAlpha(uvSample, _WidthHeightRadius.xy, _WidthHeightRadius.z, _BorderWidth);
@@ -98,11 +98,20 @@ Shader "UI/RoundedCorners/RoundedCorners" {
                 borderColor.a *= i.color.a;
 
                 #ifdef UNITY_UI_CLIP_RECT
-                borderColor.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
+                borderColor.a *= clipFactor;
                 #endif
 
-                half4 finalColor = lerp(borderColor, color, alphaInner);
-                finalColor.a = min(finalColor.a, alphaOuter);
+                // borderWeight: 1 in border area, 0 inside content
+                float borderWeight = 1.0 - alphaInner;
+                // contentWeight: 0 in border area, 1 inside content
+                float contentWeight = alphaInner;
+
+                float borderA = borderColor.a * borderWeight;
+                float spriteA = spriteColor.a * contentWeight;
+                float totalA = borderA + spriteA;
+
+                half3 finalRGB = (borderColor.rgb * borderA + spriteColor.rgb * spriteA) / max(0.0001, totalA);
+                half4 finalColor = half4(finalRGB, min(totalA, alphaOuter));
 
                 #ifdef UNITY_UI_ALPHACLIP
                 clip(finalColor.a - 0.001);

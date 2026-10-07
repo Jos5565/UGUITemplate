@@ -303,6 +303,7 @@ namespace UGUICUSTOM
                         ResetAlphaHitThresholdIfNeeded();
                         SetAllDirty();
                         TrackSprite();
+                        Refresh();
                     }
                 }
                 else if (value != null)
@@ -314,6 +315,7 @@ namespace UGUICUSTOM
                     ResetAlphaHitThresholdIfNeeded();
                     SetAllDirty();
                     TrackSprite();
+                    Refresh();
                 }
 
                 void ResetAlphaHitThresholdIfNeeded()
@@ -897,7 +899,7 @@ namespace UGUICUSTOM
         {
             if (activeSprite == null)
             {
-                base.OnPopulateMesh(toFill);
+                GenerateSimpleSprite(toFill, false);
                 return;
             }
 
@@ -942,9 +944,18 @@ namespace UGUICUSTOM
             Refresh();
         }
 
+        private void UpdateCanvasShaderChannels()
+        {
+            if (canvas != null)
+            {
+                canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1;
+            }
+        }
+
         protected override void OnEnable()
         {
             base.OnEnable();
+            UpdateCanvasShaderChannels();
             TrackSprite();
             TrackRound();
         }
@@ -984,6 +995,7 @@ namespace UGUICUSTOM
         protected override void OnCanvasHierarchyChanged()
         {
             base.OnCanvasHierarchyChanged();
+            UpdateCanvasShaderChannels();
             if (canvas == null)
             {
                 m_CachedReferencePixelsPerUnit = 100;
@@ -1004,15 +1016,38 @@ namespace UGUICUSTOM
         /// </summary>
         void GenerateSimpleSprite(VertexHelper vh, bool lPreserveAspect)
         {
-            Vector4 v = GetDrawingDimensions(lPreserveAspect);
-            var uv = (activeSprite != null) ? UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
+            Rect r = GetPixelAdjustedRect();
+            Vector4 v = new Vector4(r.x, r.y, r.x + r.width, r.y + r.height);
+            Vector4 uv = (activeSprite != null) ? UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite) : new Vector4(0, 0, 1, 1);
+
+            if (lPreserveAspect && activeSprite != null && activeSprite.rect.width > 0 && activeSprite.rect.height > 0 && r.width > 0 && r.height > 0)
+            {
+                float spriteRatio = activeSprite.rect.width / activeSprite.rect.height;
+                float rectRatio = r.width / r.height;
+
+                float uvWidth = uv.z - uv.x;
+                float uvHeight = uv.w - uv.y;
+
+                if (spriteRatio > rectRatio)
+                {
+                    float scale = rectRatio / spriteRatio;
+                    float pad = (1f - scale) * 0.5f;
+                    uv = new Vector4(uv.x, uv.y - pad * uvHeight, uv.z, uv.w + pad * uvHeight);
+                }
+                else
+                {
+                    float scale = spriteRatio / rectRatio;
+                    float pad = (1f - scale) * 0.5f;
+                    uv = new Vector4(uv.x - pad * uvWidth, uv.y, uv.z + pad * uvWidth, uv.w);
+                }
+            }
 
             var color32 = color;
             vh.Clear();
-            vh.AddVert(new Vector3(v.x, v.y), color32, new Vector2(uv.x, uv.y));
-            vh.AddVert(new Vector3(v.x, v.w), color32, new Vector2(uv.x, uv.w));
-            vh.AddVert(new Vector3(v.z, v.w), color32, new Vector2(uv.z, uv.w));
-            vh.AddVert(new Vector3(v.z, v.y), color32, new Vector2(uv.z, uv.y));
+            vh.AddVert(new Vector3(v.x, v.y), color32, new Vector2(uv.x, uv.y), new Vector2(0f, 0f), Vector3.back, Vector4.zero);
+            vh.AddVert(new Vector3(v.x, v.w), color32, new Vector2(uv.x, uv.w), new Vector2(0f, 1f), Vector3.back, Vector4.zero);
+            vh.AddVert(new Vector3(v.z, v.w), color32, new Vector2(uv.z, uv.w), new Vector2(1f, 1f), Vector3.back, Vector4.zero);
+            vh.AddVert(new Vector3(v.z, v.y), color32, new Vector2(uv.z, uv.y), new Vector2(1f, 0f), Vector3.back, Vector4.zero);
 
             vh.AddTriangle(0, 1, 2);
             vh.AddTriangle(2, 3, 0);
@@ -1983,9 +2018,13 @@ namespace UGUICUSTOM
                 image.material = r_Material;
             }
 
-            if (image is Image uiImage && uiImage.sprite != null)
+            if (activeSprite != null)
             {
-                outerUV = UnityEngine.Sprites.DataUtility.GetOuterUV(uiImage.sprite);
+                outerUV = UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite);
+            }
+            else
+            {
+                outerUV = new Vector4(0, 0, 1, 1);
             }
         }
 
@@ -1994,6 +2033,15 @@ namespace UGUICUSTOM
         {
             if (r_Material == null) return;
             var rect = ((RectTransform)transform).rect;
+
+            if (activeSprite != null)
+            {
+                outerUV = UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite);
+            }
+            else
+            {
+                outerUV = new Vector4(0, 0, 1, 1);
+            }
 
             //Multiply radius value by 2 to make the radius value appear consistent with ImageWithIndependentRoundedCorners script.
             //Right now, the ImageWithIndependentRoundedCorners appears to have double the radius than this.

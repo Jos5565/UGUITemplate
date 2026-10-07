@@ -1,15 +1,17 @@
 struct appdata {
     float4 vertex : POSITION;
     float2 uv : TEXCOORD0;
+    float2 uv1 : TEXCOORD1;
     float4 color : COLOR;  // set from Image component property
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 struct v2f {
     float2 uv : TEXCOORD0;
+    float2 uvRect : TEXCOORD1;
     float4 vertex : SV_POSITION;
     float4 color : COLOR;
-    float4 worldPosition : TEXCOORD1;
+    float4 worldPosition : TEXCOORD2;
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
@@ -21,6 +23,7 @@ v2f vert (appdata v) {
     o.worldPosition = v.vertex;
     o.vertex = UnityObjectToClipPos(v.vertex);
     o.uv = v.uv;
+    o.uvRect = v.uv1;
     o.color = v.color;
     return o;
 }
