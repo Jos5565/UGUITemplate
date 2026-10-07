@@ -24,6 +24,28 @@ namespace UGUICUSTOM
         private static readonly int prop_OuterUV = Shader.PropertyToID("_OuterUV");
         private static readonly int prop_BorderColor = Shader.PropertyToID("_BorderColor");
         private static readonly int prop_BorderWidth = Shader.PropertyToID("_BorderWidth");
+        private static readonly int prop_BorderShape = Shader.PropertyToID("_BorderShape");
+        private static readonly int prop_SpriteRect = Shader.PropertyToID("_SpriteRect");
+        private static readonly int prop_OutlineAlphaThreshold = Shader.PropertyToID("_OutlineAlphaThreshold");
+
+        public enum BorderShape { RoundedRect, SpriteOutline }
+
+        [SerializeField] private BorderShape m_BorderShape;
+        [SerializeField, Range(0.001f, 1f)] private float m_OutlineAlphaThreshold = 0.01f;
+
+        private bool UsesSpriteOutline => m_BorderShape == BorderShape.SpriteOutline && type == Type.Simple && activeSprite != null;
+
+        public BorderShape borderShape
+        {
+            get => m_BorderShape;
+            set { if (m_BorderShape == value) return; m_BorderShape = value; SetVerticesDirty(); Refresh(); }
+        }
+
+        public float outlineAlphaThreshold
+        {
+            get => m_OutlineAlphaThreshold;
+            set { m_OutlineAlphaThreshold = Mathf.Clamp(value, 0.001f, 1f); Refresh(); }
+        }
 
         public float m_Round = 40f;
         [SerializeField] private float m_BorderWidth = 0f;
@@ -53,6 +75,7 @@ namespace UGUICUSTOM
                 if (Mathf.Approximately(m_BorderWidth, value))
                     return;
                 m_BorderWidth = Mathf.Max(0f, value);
+                SetVerticesDirty();
                 Refresh();
             }
         }
@@ -414,6 +437,7 @@ namespace UGUICUSTOM
                 {
                     SetAllDirty();
                     TrackSprite();
+                    Refresh();
                 }
             }
         }
@@ -433,14 +457,14 @@ namespace UGUICUSTOM
         /// - A tiled image with sections of the sprite repeated.
         /// - As a partial image, useful for wipes, fades, timers, status bars etc.
         /// </remarks>
-        public Type type { get { return m_Type; } set { if (SetPropertyUtility.SetStruct(ref m_Type, value)) SetVerticesDirty(); } }
+        public Type type { get { return m_Type; } set { if (SetPropertyUtility.SetStruct(ref m_Type, value)) { SetVerticesDirty(); SetMaterialDirty(); Refresh(); } } }
 
         [SerializeField] private bool m_PreserveAspect = false;
 
         /// <summary>
         /// Whether this image should preserve its Sprite aspect ratio.
         /// </summary>
-        public bool PreserveAspect { get { return m_PreserveAspect; } set { if (SetPropertyUtility.SetStruct(ref m_PreserveAspect, value)) SetVerticesDirty(); } }
+        public bool PreserveAspect { get { return m_PreserveAspect; } set { if (SetPropertyUtility.SetStruct(ref m_PreserveAspect, value)) { SetVerticesDirty(); Refresh(); } } }
 
         [SerializeField] private bool m_FillCenter = true;
 
@@ -906,7 +930,7 @@ namespace UGUICUSTOM
             switch (type)
             {
                 case Type.Simple:
-                    if (!useSpriteMesh)
+                    if (!useSpriteMesh || UsesSpriteOutline)
                         GenerateSimpleSprite(toFill, m_PreserveAspect);
                     else
                         GenerateSprite(toFill, m_PreserveAspect);
@@ -974,6 +998,7 @@ namespace UGUICUSTOM
 
         protected override void UpdateMaterial()
         {
+            Refresh();
             base.UpdateMaterial();
 
             // check if this sprite has an associated alpha texture (generated when splitting RGBA = RGB + A as two textures without alpha)
@@ -1016,6 +1041,11 @@ namespace UGUICUSTOM
         /// </summary>
         void GenerateSimpleSprite(VertexHelper vh, bool lPreserveAspect)
         {
+            if (UsesSpriteOutline)
+            {
+                GenerateSpriteOutlineMesh(vh);
+                return;
+            }
             Rect r = GetPixelAdjustedRect();
             Vector4 v = new Vector4(r.x, r.y, r.x + r.width, r.y + r.height);
             Vector4 uv = (activeSprite != null) ? UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite) : new Vector4(0, 0, 1, 1);
@@ -1051,6 +1081,56 @@ namespace UGUICUSTOM
 
             vh.AddTriangle(0, 1, 2);
             vh.AddTriangle(2, 3, 0);
+        }
+
+        // Keep the original sprite size; only the drawing geometry grows for the outside stroke.
+        private Rect GetOutlineSpriteRect()
+        {
+            Rect r = GetPixelAdjustedRect();
+            Vector2 size = activeSprite.rect.size;
+            if (m_PreserveAspect && size.x > 0f && size.y > 0f)
+            {
+                float scale = Mathf.Min(r.width / size.x, r.height / size.y);
+                Vector2 fittedSize = size * scale;
+                r = new Rect(r.center - fittedSize * 0.5f, fittedSize);
+            }
+            Vector4 padding = UnityEngine.Sprites.DataUtility.GetPadding(activeSprite);
+            if (size.x > 0f && size.y > 0f)
+            {
+                r = new Rect(r.x + padding.x / size.x * r.width,
+                    r.y + padding.y / size.y * r.height,
+                    r.width * (1f - (padding.x + padding.z) / size.x),
+                    r.height * (1f - (padding.y + padding.w) / size.y));
+            }
+            return r;
+        }
+
+        private void GenerateSpriteOutlineMesh(VertexHelper vh)
+        {
+            Rect baseRect = GetPixelAdjustedRect();
+            Rect spriteRect = GetOutlineSpriteRect();
+            float expansion = m_BorderWidth > 0f ? m_BorderWidth + 1f : 0f;
+            Rect drawRect = Rect.MinMaxRect(baseRect.xMin - expansion, baseRect.yMin - expansion,
+                baseRect.xMax + expansion, baseRect.yMax + expansion);
+            Vector4 uv = UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite);
+            vh.Clear();
+            AddOutlineVertex(vh, new Vector2(drawRect.xMin, drawRect.yMin), baseRect, spriteRect, uv);
+            AddOutlineVertex(vh, new Vector2(drawRect.xMin, drawRect.yMax), baseRect, spriteRect, uv);
+            AddOutlineVertex(vh, new Vector2(drawRect.xMax, drawRect.yMax), baseRect, spriteRect, uv);
+            AddOutlineVertex(vh, new Vector2(drawRect.xMax, drawRect.yMin), baseRect, spriteRect, uv);
+            vh.AddTriangle(0, 1, 2);
+            vh.AddTriangle(2, 3, 0);
+        }
+
+        private void AddOutlineVertex(VertexHelper vh, Vector2 position, Rect baseRect, Rect spriteRect, Vector4 uv)
+        {
+            Vector2 normalized = new Vector2((position.x - spriteRect.x) / Mathf.Max(spriteRect.width, 0.0001f),
+                (position.y - spriteRect.y) / Mathf.Max(spriteRect.height, 0.0001f));
+            Vector2 textureUV = new Vector2(Mathf.LerpUnclamped(uv.x, uv.z, normalized.x),
+                Mathf.LerpUnclamped(uv.y, uv.w, normalized.y));
+            Vector2 rectUV = new Vector2((position.x - baseRect.x) / Mathf.Max(baseRect.width, 0.0001f),
+                (position.y - baseRect.y) / Mathf.Max(baseRect.height, 0.0001f));
+            vh.AddVert(position, color, textureUV, rectUV, Vector3.back, Vector4.zero);
         }
 
         private void GenerateSprite(VertexHelper vh, bool lPreserveAspect)
@@ -1977,6 +2057,7 @@ namespace UGUICUSTOM
             SetMaterialDirty();
             SetVerticesDirty();
             SetRaycastDirty();
+            Refresh();
         }
 
 #if UNITY_EDITOR
@@ -1986,6 +2067,7 @@ namespace UGUICUSTOM
             m_PixelsPerUnitMultiplier = Mathf.Max(0.01f, m_PixelsPerUnitMultiplier);
             m_Round = Mathf.Max(0f, m_Round);
             m_BorderWidth = Mathf.Max(0f, m_BorderWidth);
+            m_OutlineAlphaThreshold = Mathf.Clamp(m_OutlineAlphaThreshold, 0.001f, 1f);
             Validate();
             Refresh();
         }
@@ -2032,7 +2114,6 @@ namespace UGUICUSTOM
         public void Refresh()
         {
             if (r_Material == null) return;
-            var rect = ((RectTransform)transform).rect;
 
             if (activeSprite != null)
             {
@@ -2043,12 +2124,30 @@ namespace UGUICUSTOM
                 outerUV = new Vector4(0, 0, 1, 1);
             }
 
+            ApplyRoundMaterialProperties(r_Material);
+            // Mask creates a stencil material copy. Update only our properties on that
+            // copy so runtime sprite/width changes retain its stencil configuration.
+            Material renderedMaterial = canvasRenderer.materialCount > 0 ? canvasRenderer.GetMaterial() : null;
+            if (renderedMaterial != null && renderedMaterial != r_Material && renderedMaterial.shader == r_Material.shader)
+                ApplyRoundMaterialProperties(renderedMaterial);
+        }
+
+        private void ApplyRoundMaterialProperties(Material targetMaterial)
+        {
+            var rect = rectTransform.rect;
             //Multiply radius value by 2 to make the radius value appear consistent with ImageWithIndependentRoundedCorners script.
             //Right now, the ImageWithIndependentRoundedCorners appears to have double the radius than this.
-            r_Material.SetVector(Props, new Vector4(rect.width, rect.height, m_Round * 2, 0));
-            r_Material.SetVector(prop_OuterUV, outerUV);
-            r_Material.SetFloat(prop_BorderWidth, Mathf.Max(0f, m_BorderWidth));
-            r_Material.SetColor(prop_BorderColor, m_BorderColor);
+            targetMaterial.SetVector(Props, new Vector4(rect.width, rect.height, m_Round * 2, 0));
+            targetMaterial.SetVector(prop_OuterUV, outerUV);
+            targetMaterial.SetFloat(prop_BorderWidth, Mathf.Max(0f, m_BorderWidth));
+            targetMaterial.SetColor(prop_BorderColor, m_BorderColor);
+            targetMaterial.SetFloat(prop_BorderShape, UsesSpriteOutline ? 1f : 0f);
+            targetMaterial.SetFloat(prop_OutlineAlphaThreshold, m_OutlineAlphaThreshold);
+            if (UsesSpriteOutline)
+            {
+                Rect spriteRect = GetOutlineSpriteRect();
+                targetMaterial.SetVector(prop_SpriteRect, new Vector4(spriteRect.x, spriteRect.y, spriteRect.width, spriteRect.height));
+            }
         }
     }
 }

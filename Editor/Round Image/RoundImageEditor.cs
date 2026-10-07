@@ -30,6 +30,8 @@ namespace UGUICUSTOM
         SerializedProperty m_Round;
         SerializedProperty m_BorderWidth;
         SerializedProperty m_BorderColor;
+        SerializedProperty m_BorderShape;
+        SerializedProperty m_OutlineAlphaThreshold;
 
         SerializedProperty m_PreserveAspect;
         SerializedProperty m_UseSpriteMesh;
@@ -104,6 +106,8 @@ namespace UGUICUSTOM
             m_Round = serializedObject.FindProperty("m_Round");
             m_BorderWidth = serializedObject.FindProperty("m_BorderWidth");
             m_BorderColor = serializedObject.FindProperty("m_BorderColor");
+            m_BorderShape = serializedObject.FindProperty("m_BorderShape");
+            m_OutlineAlphaThreshold = serializedObject.FindProperty("m_OutlineAlphaThreshold");
 
             m_ShowType = new AnimBool(m_Sprite.objectReferenceValue != null);
             m_ShowType.valueChanged.AddListener(Repaint);
@@ -208,11 +212,27 @@ namespace UGUICUSTOM
         }
         protected void RoundGUI()
         {
-            EditorGUI.BeginChangeCheck();
-            float newRound = EditorGUILayout.FloatField("Image Round", m_Round.floatValue);
-            if (EditorGUI.EndChangeCheck())
+            EditorGUILayout.PropertyField(m_BorderShape, new GUIContent("Border Shape"));
+            bool spriteOutline = !m_BorderShape.hasMultipleDifferentValues &&
+                m_BorderShape.enumValueIndex == (int)RoundImage.BorderShape.SpriteOutline;
+            if (spriteOutline)
             {
-                m_Round.floatValue = Mathf.Max(0f, newRound);
+                EditorGUILayout.PropertyField(m_OutlineAlphaThreshold, new GUIContent("Outline Alpha Threshold",
+                    "Alpha cutoff for the sprite outline. Increase to ignore faint shadows."));
+                EditorGUILayout.HelpBox("Sprite Outline uses Simple geometry and ignores Image Round and Use Sprite Mesh. " +
+                    "Use a rectangular sprite atlas with rotation and Tight Packing disabled. Transparent holes are outlined too.", MessageType.Info);
+                if (!m_Type.hasMultipleDifferentValues && m_Type.enumValueIndex != (int)RoundImage.Type.Simple)
+                    EditorGUILayout.HelpBox("Sprite Outline supports Simple only. Other image types use Rounded Rect.", MessageType.Warning);
+            }
+            using (new EditorGUI.DisabledScope(spriteOutline && !m_Type.hasMultipleDifferentValues &&
+                m_Type.enumValueIndex == (int)RoundImage.Type.Simple))
+            {
+                EditorGUI.BeginChangeCheck();
+                float newRound = EditorGUILayout.FloatField("Image Round", m_Round.floatValue);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    m_Round.floatValue = Mathf.Max(0f, newRound);
+                }
             }
 
             EditorGUI.BeginChangeCheck();
