@@ -14,6 +14,8 @@ Shader "UI/RoundedCorners/RoundedCorners" {
         // Definition in Properties section is required to Mask works properly
         _WidthHeightRadius ("WidthHeightRadius", Vector) = (0,0,0,0)
         _OuterUV ("image outer uv", Vector) = (0, 0, 1, 1)
+        _BorderColor ("Border Color", Color) = (1, 1, 1, 1)
+        _BorderWidth ("Border Width", Float) = 0
         // ---
     }
     
@@ -56,6 +58,8 @@ Shader "UI/RoundedCorners/RoundedCorners" {
 
             float4 _WidthHeightRadius;
             float4 _OuterUV;
+            float4 _BorderColor;
+            float _BorderWidth;
             sampler2D _MainTex;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
@@ -75,17 +79,36 @@ Shader "UI/RoundedCorners/RoundedCorners" {
                 clip(color.a - 0.001);
                 #endif
 
-                if (color.a <= 0) {
+                if (color.a <= 0 && _BorderWidth <= 0) {
                     return color;
                 }
 
-                float alpha = CalcAlpha(uvSample, _WidthHeightRadius.xy, _WidthHeightRadius.z);
+                float alphaOuter = CalcAlpha(uvSample, _WidthHeightRadius.xy, _WidthHeightRadius.z);
+
+                if (_BorderWidth <= 0.0) {
+                    #ifdef UNITY_UI_ALPHACLIP
+                    clip(alphaOuter - 0.001);
+                    #endif
+                    return mixAlpha(tex2D(_MainTex, i.uv), i.color, alphaOuter);
+                }
+
+                float alphaInner = CalcInnerAlpha(uvSample, _WidthHeightRadius.xy, _WidthHeightRadius.z, _BorderWidth);
+
+                half4 borderColor = _BorderColor;
+                borderColor.a *= i.color.a;
+
+                #ifdef UNITY_UI_CLIP_RECT
+                borderColor.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
+                #endif
+
+                half4 finalColor = lerp(borderColor, color, alphaInner);
+                finalColor.a = min(finalColor.a, alphaOuter);
 
                 #ifdef UNITY_UI_ALPHACLIP
-                clip(alpha - 0.001);
+                clip(finalColor.a - 0.001);
                 #endif
-                
-                return mixAlpha(tex2D(_MainTex, i.uv), i.color, alpha);
+
+                return finalColor;
             }
             
             ENDCG

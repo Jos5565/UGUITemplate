@@ -28,6 +28,8 @@ namespace UGUICUSTOM
         SerializedProperty m_FillCenter;
         SerializedProperty m_Sprite;
         SerializedProperty m_Round;
+        SerializedProperty m_BorderWidth;
+        SerializedProperty m_BorderColor;
 
         SerializedProperty m_PreserveAspect;
         SerializedProperty m_UseSpriteMesh;
@@ -100,6 +102,8 @@ namespace UGUICUSTOM
             m_UseSpriteMesh = serializedObject.FindProperty("m_UseSpriteMesh");
             m_PixelsPerUnitMultiplier = serializedObject.FindProperty("m_PixelsPerUnitMultiplier");
             m_Round = serializedObject.FindProperty("m_Round");
+            m_BorderWidth = serializedObject.FindProperty("m_BorderWidth");
+            m_BorderColor = serializedObject.FindProperty("m_BorderColor");
 
             m_ShowType = new AnimBool(m_Sprite.objectReferenceValue != null);
             m_ShowType.valueChanged.AddListener(Repaint);
@@ -208,8 +212,17 @@ namespace UGUICUSTOM
             float newRound = EditorGUILayout.FloatField("Image Round", m_Round.floatValue);
             if (EditorGUI.EndChangeCheck())
             {
-                m_Round.floatValue = newRound;
+                m_Round.floatValue = Mathf.Max(0f, newRound);
             }
+
+            EditorGUI.BeginChangeCheck();
+            float newBorderWidth = EditorGUILayout.FloatField("Border Width", m_BorderWidth.floatValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_BorderWidth.floatValue = Mathf.Max(0f, newBorderWidth);
+            }
+
+            EditorGUILayout.PropertyField(m_BorderColor, new GUIContent("Border Color"));
         }
         /// <summary>
         /// Sprites's custom properties based on the type.

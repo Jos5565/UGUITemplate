@@ -22,12 +22,52 @@ namespace UGUICUSTOM
     {
         private static readonly int Props = Shader.PropertyToID("_WidthHeightRadius");
         private static readonly int prop_OuterUV = Shader.PropertyToID("_OuterUV");
+        private static readonly int prop_BorderColor = Shader.PropertyToID("_BorderColor");
+        private static readonly int prop_BorderWidth = Shader.PropertyToID("_BorderWidth");
 
         public float m_Round = 40f;
+        [SerializeField] private float m_BorderWidth = 0f;
+        [SerializeField] private Color m_BorderColor = Color.white;
         private Material r_Material;
         private Vector4 outerUV = new Vector4(0, 0, 1, 1);
 
         [HideInInspector, SerializeField] private MaskableGraphic image;
+
+        public float round
+        {
+            get => m_Round;
+            set
+            {
+                if (Mathf.Approximately(m_Round, value))
+                    return;
+                m_Round = Mathf.Max(0f, value);
+                Refresh();
+            }
+        }
+
+        public float borderWidth
+        {
+            get => m_BorderWidth;
+            set
+            {
+                if (Mathf.Approximately(m_BorderWidth, value))
+                    return;
+                m_BorderWidth = Mathf.Max(0f, value);
+                Refresh();
+            }
+        }
+
+        public Color borderColor
+        {
+            get => m_BorderColor;
+            set
+            {
+                if (m_BorderColor == value)
+                    return;
+                m_BorderColor = value;
+                Refresh();
+            }
+        }
 
 
         /// <summary>
@@ -1909,6 +1949,8 @@ namespace UGUICUSTOM
         {
             base.OnValidate();
             m_PixelsPerUnitMultiplier = Mathf.Max(0.01f, m_PixelsPerUnitMultiplier);
+            m_Round = Mathf.Max(0f, m_Round);
+            m_BorderWidth = Mathf.Max(0f, m_BorderWidth);
             Validate();
             Refresh();
         }
@@ -1950,12 +1992,15 @@ namespace UGUICUSTOM
 
         public void Refresh()
         {
+            if (r_Material == null) return;
             var rect = ((RectTransform)transform).rect;
 
             //Multiply radius value by 2 to make the radius value appear consistent with ImageWithIndependentRoundedCorners script.
             //Right now, the ImageWithIndependentRoundedCorners appears to have double the radius than this.
             r_Material.SetVector(Props, new Vector4(rect.width, rect.height, m_Round * 2, 0));
             r_Material.SetVector(prop_OuterUV, outerUV);
+            r_Material.SetFloat(prop_BorderWidth, Mathf.Max(0f, m_BorderWidth));
+            r_Material.SetColor(prop_BorderColor, m_BorderColor);
         }
     }
 }

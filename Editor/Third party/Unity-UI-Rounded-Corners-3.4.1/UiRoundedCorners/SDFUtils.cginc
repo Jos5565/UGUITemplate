@@ -36,6 +36,18 @@ float CalcAlpha(float2 samplePosition, float2 size, float radius){
     return AntialiasedCutoff(distToRect);
 }
 
+float CalcInnerAlpha(float2 samplePosition, float2 size, float radius, float borderWidth){
+    if (borderWidth * 2.0 >= size.x || borderWidth * 2.0 >= size.y) {
+        return 0.0;
+    }
+    float2 samplePositionTranslated = (samplePosition - .5) * size;
+    float outerRadius = min(radius * .5, min(size.x, size.y) * .5);
+    float2 halfInnerSize = size * .5 - borderWidth;
+    float innerRadius = max(0.0, min(outerRadius - borderWidth, min(halfInnerSize.x, halfInnerSize.y)));
+    float distToInnerRect = roundedRectangle(samplePositionTranslated, innerRadius, halfInnerSize);
+    return AntialiasedCutoff(distToInnerRect);
+}
+
 inline float2 translate(float2 samplePosition, float2 offset){
     return samplePosition - offset;
 }
